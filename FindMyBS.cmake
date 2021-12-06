@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_FLAGS "-g -Wall")
 
+option(MyBS_DEBUG_MESSAGE "Display debug messages" OFF)
+# option(MyBS_RUN_TESTS_IN_BUILD_STEP "Run the test suite last in the build step" ON)
+
 macro(GenerateProtobuf)
   find_package(Protobuf REQUIRED)
 
@@ -18,8 +21,11 @@ macro(GenerateProtobuf)
   if (EXISTS ${proto_files})
     PROTOBUF_GENERATE_CPP(PROTO_SOURCES PROTO_HEADERS ${proto_files})
     SET_SOURCE_FILES_PROPERTIES(${PROTO_SOURCES} ${PROTO_HEADERS} PROPERTIES GENERATED TRUE)
-    # message("PROTO_SOURCES=${PROTO_SOURCES}")
-    # message("PROTO_HEADERS=${PROTO_HEADERS}")
+
+    if (MyBS_DEBUG_MESSAGE)
+       message("PROTO_SOURCES=${PROTO_SOURCES}")
+       message("PROTO_HEADERS=${PROTO_HEADERS}")
+    endif()
   endif()
 endmacro()
 
@@ -67,15 +73,18 @@ macro(bs_add)
   set(options )
   set(oneValueArgs NAME)
   set(multiValueArgs SOURCES LIBS)
-  cmake_parse_arguments(BS_ADD "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  cmake_parse_arguments(MyBS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   GenerateProtobuf()
-  set(BS_ADD_LIBS ${BS_ADD_LIBS} ${PROTOBUF_LIBRARIES})
-  set(BS_ADD_INCLUDE ${PROTOBUF_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR}/include)
-  set(BS_ADD_SOURCES ${BS_ADD_SOURCES} ${PROTO_SOURCES})
-  # message("NAME=" ${BS_ADD_NAME})
-  # message("SOURCES=" ${BS_ADD_SOURCES})
-  # message("LIBS=" ${BS_ADD_LIBS})
+  set(MyBS_LIBS ${BS_ADD_LIBS} ${PROTOBUF_LIBRARIES})
+  set(MyBS_INCLUDE ${PROTOBUF_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR}/include)
+  set(MyBS_SOURCES ${BS_ADD_SOURCES} ${PROTO_SOURCES})
+
+  if (MyBS_DEBUG_MESSAGE)
+     message("NAME=" ${BS_ADD_NAME})
+     message("SOURCES=" ${BS_ADD_SOURCES})
+     message("LIBS=" ${BS_ADD_LIBS})
+  endif()
   
   add_library(
     ${BS_ADD_NAME}
